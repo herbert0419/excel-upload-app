@@ -1,6 +1,5 @@
 import pandas as pd
 import pandas_profiling
-from openpyxl import load_workbook
 from io import BytesIO
 import streamlit as st
 
@@ -9,15 +8,13 @@ def generate_analytics_report(data):
     profile = pandas_profiling.ProfileReport(data)
     return profile.to_json()
 
-# Function to read Excel file and generate analytics report
-def analyze_excel(file):
+# Function to read file and generate analytics report
+def analyze_file(file, file_type):
     try:
-        # Load Excel file
-        wb = load_workbook(file)
-        sheet = wb.active
-
-        # Load data into a Pandas DataFrame
-        data = pd.DataFrame(sheet.values, columns=[cell.value for cell in sheet[1]])
+        if file_type == 'csv':
+            data = pd.read_csv(file)
+        else:
+            data = pd.read_excel(file, engine='openpyxl')
 
         # Generate analytics report
         analytics_report = generate_analytics_report(data)
@@ -28,15 +25,19 @@ def analyze_excel(file):
 
 # Streamlit UI
 def main():
-    st.title("Excel Analytics App")
+    st.title("File Analytics App")
 
-    uploaded_file = st.file_uploader("Upload an Excel file", type=["xlsx", "xls", "csv"])
+    uploaded_file = st.file_uploader("Upload a file", type=["xlsx", "xls", "csv"])
 
     if uploaded_file:
-        st.write("Analyzing Excel file...")
+        st.write("Analyzing file...")
 
-        # Read the Excel file and generate analytics report
-        analytics_report = analyze_excel(uploaded_file)
+        # Determine file type based on extension
+        file_extension = uploaded_file.name.split('.')[-1]
+        file_type = file_extension.lower()
+
+        # Read the file and generate analytics report
+        analytics_report = analyze_file(uploaded_file, file_type)
 
         # Display the report using Streamlit's JSON component
         st.json(analytics_report)
